@@ -1,23 +1,21 @@
 # JACK-FROST-BIO
 
-> A cinematic, web-based identity card for **Jack Frost** — built to make a first impression feel unforgettable.
+> A cinematic identity card for a person who prefers leaving an atmosphere behind.
 
-[![Live experience](https://img.shields.io/badge/experience-explore-8b5cf6?style=for-the-badge)](https://github.com/rjr12-blip/JACK-FROST-BIO)
-[![HTML](https://img.shields.io/badge/built_with-HTML5-0f172a?style=for-the-badge&logo=html5&logoColor=white)](./jack.html)
+[![Explore](https://img.shields.io/badge/EXPLORE_THE_EXPERIENCE-8b5cf6?style=for-the-badge)](https://github.com/rjr12-blip/JACK-FROST-BIO) [![HTML5](https://img.shields.io/badge/HTML5-0f172a?style=for-the-badge&logo=html5&logoColor=white)](./jack.html)
 
-## The idea
+## The feeling
 
-JACK-FROST-BIO is a compact personal web experience designed for HelloTalk and social introductions. It turns a simple bio into a small, atmospheric moment: clear personality, memorable presentation, and a visual signature that feels distinctly yours.
+JACK-FROST-BIO transforms a simple introduction into a small digital keepsake: nocturnal, icy, personal, and intentionally unforgettable. It was designed for HelloTalk and social introductions where the first impression deserves more than a paragraph.
 
-## What makes it special
+## Inside the experience
 
-- A focused personal story instead of a generic profile dump
-- A polished visual identity with an icy, nocturnal mood
-- A single-file experience that is simple to share and easy to host
-- Responsive structure for phones, tablets, and desktop screens
-- No build step required — open `jack.html` and it works
+- An expressive personal narrative with a clear visual voice
+- A responsive, single-file interface that feels good on every screen
+- An icy cinematic mood without frameworks, build tools, or setup friction
+- A shareable identity artifact that is easy to host and customize
 
-## Run it locally
+## Open it
 
 ```bash
 git clone https://github.com/rjr12-blip/JACK-FROST-BIO.git
@@ -25,12 +23,12 @@ cd JACK-FROST-BIO
 open jack.html
 ```
 
-On Windows, open `jack.html` directly in your browser.
+Windows users can open `jack.html` directly.
 
-## Customize your version
+## Make it yours
 
-Open `jack.html` and update the introduction, links, interests, and visual details to make the profile unmistakably yours. The project is intentionally lightweight so the personality stays at the center.
+Edit `jack.html` to change the story, links, interests, and visual details. The project stays deliberately lightweight so the personality remains the technology.
 
-## Crafted with intention
+> **Design principle:** make someone curious enough to say hello.
 
-Made by **rjr12-blip** for expressive introductions, language exchange, and the little details that make people curious enough to say hello.
+Crafted by **rjr12-blip**.
