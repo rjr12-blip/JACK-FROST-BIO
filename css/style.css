@@ -1,0 +1,1660 @@
+/* ============================================================
+   JACK FROST — STYLE SHEET
+   ============================================================
+
+   Layout of this file:
+   1.  Design tokens   — change colors/fonts here
+   2.  Reset           — browser defaults
+   3.  Accessibility   — focus states, reduced motion
+   4.  Atmosphere      — fixed background glow
+   5.  Stars / Snow    — fixed background layers
+   6.  Intro           — loading screen
+   7.  Main content    — the profile card
+   8.  Sections        — header, hero, terminal, skills, stats…
+   9.  Music indicator — fixed bottom-right pill
+   10. Media queries   — desktop, mobile, performance
+
+   SCROLLING NOTES (please read before "fixing" scroll):
+   - The page scrolls on the document (window). There are no
+     nested scroll containers and no overflow:hidden on body.
+   - html uses `overflow-x: clip` (not `hidden`) so horizontal
+     overflow is blocked without turning the page into a
+     second scroll container on mobile.
+   - The background layers (.atmosphere, .bg-stars, .snow-layer)
+     are position:fixed with z-index:0 so they paint ABOVE the
+     body background but BELOW the content (#mainContent has
+     z-index:1). Do not give them a negative z-index — the
+     body gradient would hide them.
+   - While the intro is open, <html> gets .intro-active which
+     locks scrolling so the hidden page cannot be scrolled
+     behind the intro overlay.
+   ============================================================ */
+
+/* ============================================================
+   1. DESIGN TOKENS
+   ============================================================ */
+
+:root {
+  --bg-0: #01030d;
+  --bg-1: #020617;
+  --bg-2: #071126;
+  --surface: rgba(7, 15, 32, 0.78);
+  --surface-soft: rgba(255, 255, 255, 0.035);
+  --surface-hover: rgba(125, 211, 252, 0.065);
+
+  --cyan: #7dd3fc;
+  --cyan-bright: #cffafe;
+  --blue: #38bdf8;
+  --purple: #a78bfa;
+  --purple-deep: #8b5cf6;
+  --pink: #f9a8d4;
+  --pink-hot: #ff7edb;
+  --white: #f8fafc;
+  --text: #e2e8f0;
+  --text-soft: #cbd5e1;
+  --muted: #94a3b8;
+
+  --line: rgba(255, 255, 255, 0.075);
+  --line-soft: rgba(255, 255, 255, 0.045);
+
+  --shadow:
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 0 80px rgba(56, 189, 248, 0.055);
+
+  --radius-xl: 34px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --radius-pill: 999px;
+
+  --font-main: "Inter", sans-serif;
+  --font-tech: "Orbitron", sans-serif;
+  --font-display: "Cinzel", serif;
+  --font-grotesk: "Space Grotesk", sans-serif;
+  --font-script: "Dancing Script", cursive;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* ============================================================
+   2. RESET
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg-0);
+  scroll-behavior: smooth;
+
+  /* Block horizontal scrolling without creating a second
+     scroll container (overflow-x: hidden does that on
+     mobile and can make touch scrolling feel unnatural). */
+  overflow-x: clip;
+
+  /* Reserve the scrollbar space so locking the intro
+     scroll (below) does not shift the layout. */
+  scrollbar-gutter: stable;
+}
+
+/* Scroll lock while the intro overlay is open.
+   Added and removed by js/intro.js. */
+html.intro-active {
+  overflow: hidden;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  padding:
+    calc(var(--safe-top) + 14px)
+    max(12px, var(--safe-right))
+    calc(var(--safe-bottom) + 28px)
+    max(12px, var(--safe-left));
+
+  font-family: var(--font-main);
+  color: var(--white);
+  background:
+    radial-gradient(
+      ellipse 90% 50% at 50% -10%,
+      rgba(30, 58, 95, 0.7) 0%,
+      rgba(10, 16, 48, 0.7) 28%,
+      rgba(3, 11, 31, 0.9) 55%,
+      var(--bg-0) 100%
+    );
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  /* No overflow rules on body — it must never become a
+     nested scroll container. No transform/will-change
+     either; those create giant composited layers and
+     cause scrolling instability on mobile. */
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ============================================================
+   3. ACCESSIBILITY
+   ============================================================ */
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ============================================================
+   4. GLOBAL ATMOSPHERE
+   ============================================================ */
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* must stay >= 0 — the body gradient is opaque */
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 15% 20%,
+      rgba(56, 189, 248, 0.075),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 85% 25%,
+      rgba(139, 92, 246, 0.07),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 55% 85%,
+      rgba(255, 126, 219, 0.045),
+      transparent 30%
+    );
+}
+
+.atmosphere::before,
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.atmosphere::before {
+  width: 55vw;
+  height: 55vw;
+  min-width: 320px;
+  min-height: 320px;
+  top: -20vw;
+  left: -15vw;
+  background: rgba(56, 189, 248, 0.065);
+  filter: blur(70px);
+  /* One extremely slow animation rather than several
+     competing blur animations. */
+  animation: ambientDrift 18s ease-in-out infinite alternate;
+}
+
+.atmosphere::after {
+  width: 60vw;
+  height: 60vw;
+  min-width: 350px;
+  min-height: 350px;
+  right: -20vw;
+  bottom: -25vw;
+  background: rgba(139, 92, 246, 0.055);
+  filter: blur(75px);
+  animation: ambientDriftReverse 22s ease-in-out infinite alternate;
+}
+
+@keyframes ambientDrift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(4%, 3%, 0) scale(1.06);
+  }
+}
+
+@keyframes ambientDriftReverse {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(-3%, -4%, 0) scale(1.05);
+  }
+}
+
+/* ============================================================
+   5. STARS
+   ============================================================ */
+
+.bg-stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* above body background, below content */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.3;
+  animation: starPulse linear infinite;
+}
+
+@keyframes starPulse {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.45);
+  }
+}
+
+.shooting-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 7px 2px rgba(255, 255, 255, 0.8),
+    0 0 22px 4px rgba(125, 211, 252, 0.45);
+  opacity: 0;
+  animation: shootingStar linear infinite;
+}
+
+.shooting-star::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  width: 65px;
+  height: 1px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.7),
+      transparent
+    );
+}
+
+@keyframes shootingStar {
+  0%,
+  84% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(-35deg);
+  }
+
+  86% {
+    opacity: 1;
+  }
+
+  92% {
+    opacity: 0;
+    transform: translate3d(-320px, 170px, 0) rotate(-35deg);
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   6. SNOW
+   ============================================================ */
+
+.snow-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* above body background, below content */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.flake {
+  position: absolute;
+  top: -10vh;
+  color: rgba(255, 255, 255, 0.62);
+  text-shadow: 0 0 7px rgba(200, 230, 255, 0.4);
+  animation: snowFall linear infinite;
+}
+
+@keyframes snowFall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.7;
+  }
+
+  85% {
+    opacity: 0.45;
+  }
+
+  100% {
+    transform: translate3d(70px, 120vh, 0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   7. INTRO
+   ============================================================ */
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(30, 58, 95, 0.35),
+      transparent 38%
+    ),
+    #010617;
+  opacity: 1;
+  visibility: visible;
+  /* Only opacity is animated — no display:none → block
+     layout jump. */
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+.intro-overlay.is-exiting {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 700ms;
+  pointer-events: none;
+}
+
+.intro-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.intro-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at center,
+      transparent 0%,
+      rgba(1, 6, 23, 0.08) 45%,
+      rgba(1, 6, 23, 0.72) 100%
+    );
+}
+
+.intro-content {
+  position: relative;
+  z-index: 2;
+  width: min(92vw, 500px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding:
+    30px
+    20px
+    calc(30px + var(--safe-bottom));
+  text-align: center;
+  animation: introContentIn 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes introContentIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.intro-emblem {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 22px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(125, 211, 252, 0.16),
+      rgba(125, 211, 252, 0.025) 58%,
+      transparent 70%
+    );
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  box-shadow:
+    0 0 35px rgba(125, 211, 252, 0.13),
+    inset 0 0 25px rgba(125, 211, 252, 0.06);
+  animation: emblemFloat 4s ease-in-out infinite;
+}
+
+.intro-emblem::before,
+.intro-emblem::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  border: 1px solid rgba(125, 211, 252, 0.08);
+}
+
+.intro-emblem::after {
+  inset: -16px;
+  border-color: rgba(167, 139, 250, 0.055);
+}
+
+.intro-snowflake {
+  font-size: 2.4rem;
+  filter:
+    drop-shadow(0 0 12px rgba(125, 211, 252, 0.6))
+    drop-shadow(0 0 28px rgba(125, 211, 252, 0.25));
+}
+
+@keyframes emblemFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+.intro-subtitle {
+  margin-bottom: 13px;
+  font-family: var(--font-tech);
+  font-size: 0.63rem;
+  font-weight: 500;
+  letter-spacing: 3px;
+  color: rgba(203, 213, 225, 0.72);
+}
+
+.intro-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 10vw, 3.15rem);
+  line-height: 1.05;
+  letter-spacing: 2px;
+  color: transparent;
+  background:
+    linear-gradient(
+      120deg,
+      #ffffff 0%,
+      #dbeafe 25%,
+      #7dd3fc 48%,
+      #c4b5fd 68%,
+      #f5d0fe 84%,
+      #ffffff 100%
+    );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleShimmer 7s ease-in-out infinite;
+}
+
+@keyframes titleShimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.intro-status-text {
+  min-height: 24px;
+  margin-top: 20px;
+  font-family: var(--font-tech);
+  font-size: 0.68rem;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  text-shadow: 0 0 12px rgba(125, 211, 252, 0.45);
+}
+
+.intro-progress-wrap {
+  position: relative;
+  width: min(300px, 78vw);
+  height: 4px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(125, 211, 252, 0.12);
+  box-shadow: inset 0 0 14px rgba(125, 211, 252, 0.07);
+}
+
+.intro-progress-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      #38bdf8,
+      #7dd3fc,
+      #c084fc,
+      #f9a8d4
+    );
+  box-shadow: 0 0 14px rgba(125, 211, 252, 0.5);
+  transform-origin: left center;
+  transition: width 100ms linear;
+}
+
+.intro-tap-btn {
+  position: relative;
+  display: none;
+  margin-top: 28px;
+  min-height: 50px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.36);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(125, 211, 252, 0.12),
+      rgba(139, 92, 246, 0.08)
+    );
+  color: #fff;
+  font-family: var(--font-tech);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 0 24px rgba(125, 211, 252, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: enterPulse 2.5s ease-in-out infinite;
+}
+
+.intro-tap-btn.visible {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.intro-tap-btn:active {
+  transform: scale(0.96);
+}
+
+@keyframes enterPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(125, 211, 252, 0.1);
+  }
+
+  50% {
+    box-shadow:
+      0 0 32px rgba(125, 211, 252, 0.25),
+      0 0 60px rgba(139, 92, 246, 0.1);
+  }
+}
+
+.intro-footnote {
+  margin-top: 15px;
+  font-family: var(--font-tech);
+  font-size: 0.58rem;
+  letter-spacing: 2px;
+  color: rgba(148, 163, 184, 0.62);
+}
+
+/* ============================================================
+   8. MAIN CONTENT
+   ============================================================ */
+
+#mainContent {
+  width: 100%;
+  max-width: 470px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1; /* above the fixed background layers (z-index:0) */
+
+  /* Always participates in layout. Hidden with
+     opacity/visibility during the intro. This eliminates
+     the display:none → block layout jump. */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transform: translate3d(0, 12px, 0);
+
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 700ms;
+}
+
+#mainContent.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+
+  /* `none` instead of an identity translate3d — an
+     identity transform would keep a composited layer
+     alive over the whole page. */
+  transform: none;
+
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+/* ============================================================
+   9. CARD
+   ============================================================ */
+
+.card-wrapper {
+  position: relative;
+  padding: 1px;
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(125, 211, 252, 0.22),
+      rgba(139, 92, 246, 0.14),
+      rgba(255, 126, 219, 0.11),
+      rgba(125, 211, 252, 0.18)
+    );
+  box-shadow:
+    0 0 35px rgba(125, 211, 252, 0.07),
+    0 28px 80px rgba(0, 0, 0, 0.35);
+  transform-style: preserve-3d;
+
+  /* No permanent will-change — it is applied only while
+     pointer/gyro interaction is active (js/interactions.js). */
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: calc(var(--radius-xl) - 1px);
+  padding: 20px 18px 22px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(11, 21, 43, 0.9),
+      rgba(5, 12, 28, 0.82)
+    );
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  box-shadow: var(--shadow);
+  isolation: isolate;
+}
+
+/* Lightweight highlight. No giant constantly animated
+   blurred layer. */
+.card::before {
+  content: "";
+  position: absolute;
+  top: -130px;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(125, 211, 252, 0.16),
+      rgba(139, 92, 246, 0.065) 38%,
+      transparent 70%
+    );
+  filter: blur(28px);
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.card-inner {
+  position: relative;
+  z-index: 2;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 35px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  color: #dbeafe;
+  font-size: 0.65rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 12px rgba(125, 211, 252, 0.8);
+  animation: onlinePulse 2s ease-in-out infinite;
+}
+
+@keyframes onlinePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+.hero {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.ring {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  isolation: isolate;
+}
+
+/* Static geometry is deliberately used here. The old
+   continuously spinning 3-ring system was one of the
+   unnecessary animation/compositing costs. */
+
+.ring::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.075);
+}
+
+.ring::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1px solid rgba(125, 211, 252, 0.08);
+  box-shadow: 0 0 28px rgba(125, 211, 252, 0.07);
+}
+
+.avatar {
+  position: relative;
+  z-index: 2;
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.08);
+  background: #071126;
+  box-shadow:
+    0 0 28px rgba(125, 211, 252, 0.24),
+    0 0 65px rgba(125, 211, 252, 0.08);
+  user-select: none;
+  pointer-events: none;
+  /* Only transform/opacity can animate smoothly. */
+  animation: avatarFloat 6s ease-in-out infinite;
+}
+
+/* Fallback shown when the avatar image is missing
+   (added by js/config.js on image error). */
+.avatar-fallback {
+  position: relative;
+  z-index: 2;
+  width: 180px;
+  height: 180px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle, #0d2444, #071126);
+  font-size: 3.6rem;
+  box-shadow: 0 0 28px rgba(125, 211, 252, 0.24);
+  animation: avatarFloat 6s ease-in-out infinite;
+}
+
+@keyframes avatarFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+.name-wrap {
+  margin-top: 18px;
+}
+
+.name {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 9vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: 1.5px;
+  color: transparent;
+  background:
+    linear-gradient(
+      120deg,
+      #ffffff,
+      #e0f2fe 24%,
+      #7dd3fc 45%,
+      #c4b5fd 65%,
+      #f5d0fe 82%,
+      #ffffff
+    );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: nameShimmer 8s ease-in-out infinite;
+}
+
+@keyframes nameShimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    filter: drop-shadow(0 0 8px rgba(125, 211, 252, 0.3));
+  }
+
+  50% {
+    background-position: 100% 50%;
+    filter: drop-shadow(0 0 13px rgba(139, 92, 246, 0.32));
+  }
+}
+
+.typing {
+  min-height: 26px;
+  margin-top: 8px;
+  font-family: var(--font-tech);
+  font-size: 0.77rem;
+  letter-spacing: 1px;
+  color: var(--cyan-bright);
+  text-shadow: 0 0 9px rgba(125, 211, 252, 0.35);
+}
+
+.subtitle {
+  margin-top: 10px;
+  color: rgba(219, 234, 254, 0.88);
+  font-size: 0.81rem;
+  line-height: 1.75;
+}
+
+.highlight {
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.highlight-purple {
+  color: var(--purple);
+  font-weight: 700;
+}
+
+.highlight-pink {
+  color: var(--pink);
+  font-weight: 700;
+}
+
+/* ============================================================
+   QUOTE
+   ============================================================ */
+
+.quote-box {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 19px;
+  padding: 14px 16px;
+  text-align: center;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.025);
+  color: #eff6ff;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  transition:
+    opacity 350ms ease,
+    transform 350ms ease;
+}
+
+/* ============================================================
+   TERMINAL
+   ============================================================ */
+
+.terminal {
+  margin-top: 18px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  background: #020817;
+  box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.3);
+}
+
+.termTop {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  background: rgba(13, 21, 37, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.termDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.termDot:nth-child(1) {
+  background: #ff5f57;
+}
+
+.termDot:nth-child(2) {
+  background: #ffbd2e;
+}
+
+.termDot:nth-child(3) {
+  background: #28c840;
+}
+
+.termBody {
+  min-height: 130px;
+  padding: 14px;
+  font-family: var(--font-grotesk);
+  font-size: 0.75rem;
+  line-height: 1.85;
+  color: #dbeafe;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.termBody .line {
+  min-height: 1.85em;
+  opacity: 0;
+  animation: lineReveal 280ms ease forwards;
+}
+
+@keyframes lineReveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 3px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ============================================================
+   SECTION TITLE
+   ============================================================ */
+
+.sectionTitle {
+  margin: 25px 0 14px;
+  text-align: center;
+  font-family: var(--font-tech);
+  font-size: 0.72rem;
+  letter-spacing: 2.5px;
+  color: var(--cyan);
+  text-shadow: 0 0 10px rgba(125, 211, 252, 0.28);
+}
+
+/* ============================================================
+   SKILLS (CORE INTERESTS)
+   ============================================================ */
+
+.skills {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.skill {
+  position: relative;
+  min-height: 120px;
+  padding: 15px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.025);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.skill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(125, 211, 252, 0.075),
+      transparent 60%
+    );
+  opacity: 0;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+
+.skill:active {
+  transform: scale(0.975);
+  border-color: rgba(125, 211, 252, 0.18);
+  background: rgba(125, 211, 252, 0.045);
+}
+
+.skill:active::before {
+  opacity: 1;
+}
+
+.skill h4 {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 7px;
+  font-size: 0.76rem;
+  color: var(--cyan);
+}
+
+.skill p {
+  position: relative;
+  z-index: 1;
+  color: #cbd5e1;
+  font-size: 0.66rem;
+  line-height: 1.65;
+}
+
+/* ============================================================
+   STATS
+   ============================================================ */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.stat {
+  padding: 16px;
+  text-align: center;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--line-soft);
+  transition:
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.stat:active {
+  transform: scale(0.975);
+  background: rgba(125, 211, 252, 0.04);
+}
+
+.statNum {
+  font-family: var(--font-tech);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--cyan);
+  text-shadow: 0 0 12px rgba(125, 211, 252, 0.3);
+}
+
+.statLabel {
+  margin-top: 4px;
+  font-size: 0.63rem;
+  color: #cbd5e1;
+}
+
+/* ============================================================
+   TAGS
+   ============================================================ */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.tag {
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(125, 211, 252, 0.045);
+  border: 1px solid rgba(125, 211, 252, 0.1);
+  color: var(--cyan);
+  font-size: 0.64rem;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.tag:active {
+  transform: scale(0.94);
+  background: rgba(125, 211, 252, 0.1);
+  border-color: rgba(125, 211, 252, 0.25);
+}
+
+/* ============================================================
+   PERSONALITY (FLIRTY) BOX
+   ============================================================ */
+
+.flirty {
+  margin-top: 22px;
+  padding: 19px;
+  text-align: center;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(125, 211, 252, 0.035),
+      rgba(139, 92, 246, 0.04),
+      rgba(255, 126, 219, 0.025)
+    );
+  color: #f1f5f9;
+  font-size: 0.76rem;
+  line-height: 1.9;
+}
+
+.cta-line {
+  font-size: 0.84rem;
+  line-height: 1.8;
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+
+.action-hint {
+  margin-top: 19px;
+  margin-bottom: 7px;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--font-tech);
+  font-size: 0.61rem;
+  letter-spacing: 1.5px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+
+.btn {
+  position: relative;
+  min-height: 48px;
+  padding: 8px 5px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(125, 211, 252, 0.13);
+  background: rgba(125, 211, 252, 0.045);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(125, 211, 252, 0.18),
+      transparent 70%
+    );
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.btn:active {
+  transform: scale(0.95);
+  background: rgba(125, 211, 252, 0.1);
+  border-color: rgba(125, 211, 252, 0.3);
+  box-shadow: 0 0 24px rgba(125, 211, 252, 0.13);
+}
+
+.btn:active::before {
+  opacity: 1;
+}
+
+/* ============================================================
+   CONSOLE
+   ============================================================ */
+
+.console {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 15px;
+  padding: 15px;
+  text-align: center;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line-soft);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.consoleTop {
+  font-family: var(--font-tech);
+  font-size: 0.61rem;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  text-shadow: 0 0 8px rgba(125, 211, 252, 0.3);
+}
+
+.console-loader {
+  width: 0;
+  height: 3px;
+  margin: 10px 0;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      var(--cyan),
+      #c084fc,
+      var(--pink-hot)
+    );
+  box-shadow: 0 0 8px rgba(125, 211, 252, 0.35);
+  transition: width 100ms linear;
+}
+
+.consoleText {
+  min-height: 22px;
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+/* ============================================================
+   BATTERY
+   ============================================================ */
+
+.lowBattery {
+  display: none;
+  margin-top: 14px;
+  padding: 10px 15px;
+  text-align: center;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 80, 80, 0.08);
+  border: 1px solid rgba(255, 80, 80, 0.18);
+  color: #fecaca;
+  font-size: 0.66rem;
+}
+
+/* ============================================================
+   CTA
+   ============================================================ */
+
+.cta {
+  margin-top: 24px;
+  padding: 21px;
+  text-align: center;
+  border-radius: 26px;
+  border: 1px solid var(--line-soft);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(125, 211, 252, 0.035),
+      rgba(255, 255, 255, 0.02),
+      rgba(139, 92, 246, 0.03)
+    );
+}
+
+.hellotalk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 16px;
+  min-height: 48px;
+  padding: 0 21px;
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.96);
+  color: #020617;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.hellotalk-btn img {
+  width: auto;
+  height: 27px;
+  object-fit: contain;
+}
+
+.hellotalk-btn:active {
+  transform: scale(0.96);
+  box-shadow:
+    0 0 28px rgba(255, 255, 255, 0.25),
+    0 0 45px rgba(125, 211, 252, 0.16);
+}
+
+.footer {
+  margin-top: 18px;
+  text-align: center;
+  color: rgba(148, 163, 184, 0.62);
+  font-size: 0.61rem;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   10. MUSIC INDICATOR (fixed button)
+   ============================================================ */
+
+.music-indicator {
+  position: fixed;
+
+  right: max(12px, var(--safe-right));
+  bottom: calc(var(--safe-bottom) + 12px);
+
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  min-height: 44px; /* comfortable touch target */
+  padding: 0 14px;
+
+  border-radius: var(--radius-pill);
+
+  /* Solid-ish background instead of backdrop-filter:
+     a FIXED blurred layer has to re-blur the page on
+     every scroll frame, which causes jank on mobile. */
+  background: rgba(2, 6, 23, 0.92);
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  color: #e0f2fe;
+
+  font-size: 0.62rem;
+
+  cursor: pointer;
+  touch-action: manipulation;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  /* Invisible (and untappable) until the first state
+     update makes it visible. */
+  pointer-events: none;
+
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+
+  transition:
+    opacity 350ms ease,
+    transform 350ms ease;
+}
+
+.music-indicator.visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+}
+
+.music-indicator[hidden] {
+  display: none;
+}
+
+.eq-bars {
+  height: 14px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.eq-bars span {
+  width: 2px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 4px rgba(125, 211, 252, 0.45);
+  animation: equalizer 600ms ease-in-out infinite alternate;
+}
+
+.eq-bars span:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.eq-bars span:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+.eq-bars span:nth-child(4) {
+  animation-delay: 360ms;
+}
+
+/* The bars only move while music is actually playing. */
+.music-indicator:not(.is-playing) .eq-bars span {
+  animation-play-state: paused;
+  height: 4px;
+}
+
+@keyframes equalizer {
+  from {
+    height: 4px;
+  }
+
+  to {
+    height: 14px;
+  }
+}
+
+/* ============================================================
+   11. DESKTOP
+   ============================================================ */
+
+@media (min-width: 768px) {
+  body {
+    padding-top: 28px;
+  }
+
+  .card-wrapper {
+    /* Desktop gets subtle perspective only when pointer
+       interaction is active. */
+    perspective: 1000px;
+  }
+
+  .card {
+    min-height: 100px;
+  }
+}
+
+/* ============================================================
+   12. MOBILE
+   ============================================================ */
+
+@media (max-width: 520px) {
+  .card {
+    padding: 16px 12px 18px;
+  }
+
+  .ring {
+    width: 190px;
+    height: 190px;
+  }
+
+  .avatar,
+  .avatar-fallback {
+    width: 164px;
+    height: 164px;
+  }
+
+  .avatar-fallback {
+    font-size: 3.2rem;
+  }
+
+  .skills {
+    grid-template-columns: 1fr;
+  }
+
+  .skill {
+    min-height: auto;
+  }
+
+  .intro-title {
+    font-size: 2rem;
+  }
+
+  .intro-progress-wrap {
+    width: 225px;
+  }
+
+  .intro-status-text {
+    font-size: 0.62rem;
+    letter-spacing: 1.7px;
+  }
+
+  .hellotalk-btn {
+    padding: 0 17px;
+  }
+}
+
+/* Very small phones — keep everything inside the screen. */
+
+@media (max-width: 360px) {
+  .actions {
+    grid-template-columns: 1fr;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   13. PERFORMANCE FALLBACK
+   ============================================================ */
+
+@media (max-width: 420px), (prefers-reduced-motion: reduce) {
+  .atmosphere::before,
+  .atmosphere::after {
+    animation: none;
+  }
+
+  .star:nth-child(n + 70) {
+    display: none;
+  }
+
+  .flake:nth-child(n + 28) {
+    display: none;
+  }
+
+  .shooting-star {
+    display: none;
+  }
+}
+
