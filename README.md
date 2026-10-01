@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/images/avatar.jpg" alt="Jack Frost ❄️" width="320">
+  <img src="https://fak-h.jokerkeep057.workers.dev/hpa0z" alt="Jack Frost ❄️" width="320">
 </p>
 
 # ❄️ JACK-FROST-BIO
