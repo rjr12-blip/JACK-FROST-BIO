@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/images/avatar.jpg" alt="Jack Frost ❄️" width="320">
+</p>
+
 # ❄️ JACK-FROST-BIO
 
 > A cinematic identity card for a person who prefers leaving an atmosphere behind.
