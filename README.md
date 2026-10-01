@@ -1,18 +1,24 @@
-## JACK-FROST-BIO
+# ❄️ JACK-FROST-BIO
 
 > A cinematic identity card for a person who prefers leaving an atmosphere behind.
 
-[![Explore](https://img.shields.io/badge/EXPLORE_THE_EXPERIENCE-8b5cf6?style=for-the-badge)](https://rjr12-blip.github.io/JACK-FROST-BIO/)
+## 🌐 LIVE DEMO
+
+[![Open the live experience](https://img.shields.io/badge/OPEN_THE_LIVE_EXPERIENCE-8b5cf6?style=for-the-badge&logo=github&logoColor=white)](https://rjr12-blip.github.io/JACK-FROST-BIO/)
+
+### 👉 **[rjr12-blip.github.io/JACK-FROST-BIO](https://rjr12-blip.github.io/JACK-FROST-BIO/)**
+
+One click opens the finished website — frost intro, background music, falling
+snow, typing roles, rotating quotes and all. Nothing to install, nothing to
+build; it runs right in the browser.
+
 [![HTML5](https://img.shields.io/badge/HTML5-0f172a?style=for-the-badge&logo=html5&logoColor=white)](./index.html)
 [![CSS3](https://img.shields.io/badge/CSS3-0f172a?style=for-the-badge&logo=css3&logoColor=white)](./css/style.css)
 [![JavaScript](https://img.shields.io/badge/JAVASCRIPT-0f172a?style=for-the-badge&logo=javascript&logoColor=yellow)](./js/)
+[![GitHub Pages](https://img.shields.io/badge/HOSTED_ON-GitHub_Pages-222222?style=for-the-badge&logo=githubpages&logoColor=white)](https://rjr12-blip.github.io/JACK-FROST-BIO/)
 
-## 🌐 Live Demo
-
-**→ [rjr12-blip.github.io/JACK-FROST-BIO](https://rjr12-blip.github.io/JACK-FROST-BIO/) ←**
-
-The demo is served straight from this repository with GitHub Pages — no build
-step, no framework, no server.
+Hosted free on **GitHub Pages**, served straight from the `main` branch of this
+repository (root folder) — no build step, no framework, no server.
 
 ## The feeling
 
